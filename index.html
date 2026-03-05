@@ -1,12 +1,79 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-
+<meta charset="UTF-8">
 <title>AI Campus Assistant</title>
 
-<link rel="stylesheet" href="style.css">
+<style>
 
+body{
+font-family: Arial;
+margin:0;
+background:#f5f5f5;
+transition:0.3s;
+}
+
+.dark{
+background:#121212;
+color:white;
+}
+
+header{
+background:#2c3e50;
+color:white;
+padding:15px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+button{
+padding:8px 14px;
+border:none;
+cursor:pointer;
+border-radius:5px;
+}
+
+.container{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+padding:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+
+.dark .card{
+background:#1e1e1e;
+}
+
+#chatBox{
+height:200px;
+overflow:auto;
+border:1px solid #ccc;
+padding:10px;
+margin-bottom:10px;
+}
+
+input{
+padding:8px;
+width:70%;
+}
+
+.study-item{
+margin-top:5px;
+}
+
+.score{
+font-weight:bold;
+}
+
+</style>
 </head>
 
 
@@ -14,79 +81,230 @@
 
 <header>
 
-<h1>AI Campus Assistant</h1>
+<h2>🎓 AI Campus Assistant</h2>
 
+<div>
 <button onclick="toggleDark()">🌙 Dark Mode</button>
-
-<button onclick="login()">Login with Google</button>
+<button onclick="googleLogin()">Login</button>
+</div>
 
 </header>
 
 
-<nav>
-
-<button onclick="openTab('chat')">AI Chatbot</button>
-
-<button onclick="openTab('news')">Fake News Detector</button>
-
-<button onclick="openTab('planner')">Study Planner</button>
-
-</nav>
+<div class="container">
 
 
-<!-- CHATBOT -->
+<!-- AI CHATBOT -->
+<div class="card">
 
-<section id="chat" class="tab">
+<h3>🤖 AI Chatbot</h3>
 
-<h2>AI Chatbot</h2>
+<div id="chatBox"></div>
 
-<div id="chatbox"></div>
-
-<input id="userInput" placeholder="Ask something...">
-
+<input id="chatInput" placeholder="Ask study question...">
 <button onclick="sendMessage()">Send</button>
-
 <button onclick="startVoice()">🎤</button>
 
-</section>
+</div>
 
 
-<!-- FAKE NEWS -->
+<!-- FAKE NEWS CHECKER -->
+<div class="card">
 
-<section id="news" class="tab">
+<h3>📰 Fake News Detector</h3>
 
-<h2>Fake News Detector</h2>
+<input id="newsInput" placeholder="Paste news headline">
 
-<textarea id="newsText" placeholder="Paste news text"></textarea>
+<button onclick="checkNews()">Check</button>
 
-<button onclick="analyzeNews()">Analyze</button>
+<p id="newsResult" class="score"></p>
 
-<p id="score"></p>
-
-</section>
+</div>
 
 
 <!-- STUDY PLANNER -->
+<div class="card">
 
-<section id="planner" class="tab">
+<h3>📚 Study Planner</h3>
 
-<h2>Study Planner</h2>
+<input id="taskInput" placeholder="Add study task">
 
-<input id="taskInput" placeholder="Enter task">
+<button onclick="addTask()">Add</button>
 
-<button onclick="addTask()">Add Task</button>
+<div id="taskList"></div>
 
-<ul id="taskList"></ul>
-
-</section>
+</div>
 
 
-<script src="script.js"></script>
-<script src="chatbot.js"></script>
-<script src="news.js"></script>
-<script src="planner.js"></script>
-<script src="auth.js"></script>
+<!-- USER INFO -->
+<div class="card">
+
+<h3>👤 User</h3>
+
+<p id="userInfo">Not logged in</p>
+
+</div>
+
+</div>
+
+
+
+<!-- Firebase -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+
+import { getAuth, signInWithPopup, GoogleAuthProvider } 
+from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+
+const firebaseConfig = {
+
+apiKey: "AIzaSyBq5YRqTJmjIxOHbcsBSudHAEjLxHpAwwc",
+authDomain: "ai-campus-assistant-638e4.firebaseapp.com",
+projectId: "ai-campus-assistant-638e4",
+storageBucket: "ai-campus-assistant-638e4.firebasestorage.app",
+messagingSenderId: "1035278424441",
+appId: "1:1035278424441:web:253fe1bfdcd2ddda9cf7a8",
+measurementId: "G-8W2DWBJJ2N"
+
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth();
+
+window.googleLogin = function(){
+
+const provider = new GoogleAuthProvider();
+
+signInWithPopup(auth, provider)
+.then(result => {
+
+document.getElementById("userInfo").innerText =
+"Logged in as: " + result.user.email;
+
+})
+.catch(error => alert(error.message));
+
+}
+
+</script>
+
+
+
+<script>
+
+
+function toggleDark(){
+
+document.body.classList.toggle("dark");
+
+}
+
+
+
+function sendMessage(){
+
+let input = document.getElementById("chatInput");
+
+let chatBox = document.getElementById("chatBox");
+
+let userMsg = input.value;
+
+if(userMsg=="") return;
+
+chatBox.innerHTML += "<p><b>You:</b> "+userMsg+"</p>";
+
+let aiReply = getAIResponse(userMsg);
+
+setTimeout(()=>{
+chatBox.innerHTML += "<p><b>AI:</b> "+aiReply+"</p>";
+},500);
+
+input.value="";
+
+}
+
+
+
+function getAIResponse(msg){
+
+msg = msg.toLowerCase();
+
+if(msg.includes("exam"))
+return "Start revision early and practice previous question papers.";
+
+if(msg.includes("study"))
+return "Try the Pomodoro technique: 25 min study + 5 min break.";
+
+if(msg.includes("project"))
+return "Choose a real-world problem for your project.";
+
+return "I'm your campus AI assistant. Ask about studies, exams, or projects.";
+
+}
+
+
+
+function startVoice(){
+
+let recognition = new webkitSpeechRecognition();
+
+recognition.onresult = function(event){
+
+document.getElementById("chatInput").value =
+event.results[0][0].transcript;
+
+};
+
+recognition.start();
+
+}
+
+
+
+function checkNews(){
+
+let text = document.getElementById("newsInput").value;
+
+let result = document.getElementById("newsResult");
+
+let score = Math.floor(Math.random()*100);
+
+if(score>70)
+result.innerHTML="Credibility Score: "+score+"% (Likely Real)";
+
+else
+result.innerHTML="Credibility Score: "+score+"% (Possibly Fake)";
+
+}
+
+
+
+function addTask(){
+
+let task = document.getElementById("taskInput").value;
+
+let list = document.getElementById("taskList");
+
+if(task=="") return;
+
+let div = document.createElement("div");
+
+div.className="study-item";
+
+div.innerHTML = "✔ "+task;
+
+list.appendChild(div);
+
+document.getElementById("taskInput").value="";
+
+}
+
+</script>
+
 
 </body>
-
 </html>
